@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+<head>
+	<title>Space-filling (Peano, Hilbert) curves</title>
+</head>
+<body>
+	<h1>Space-filling (Peano, Hilbert) curves</h1>
+	
+	<canvas id="canvas" style="border:2px solid black"></canvas>
+	
+	<p>
+	Size: <select onchange="redraw()" id="size">
+		<option value="256" selected="selected">256</option>
+		<option value="512">512</option>
+		<option value="768">768</option>
+		<option value="1024">1024</option>
+		<option value="2048">2048</option>
+	</select>
+	
+	Mode: <select onchange="redraw()" id="mode">
+		<option value="0">Corner</option>
+		<option value="1">Round</option>
+		<option value="2">Hilbert</option>
+	</select>
+	
+	Depth: <select onchange="redraw()" id="depth">
+		<option value="1">1</option>
+		<option value="2">2</option>
+		<option value="3">3</option>
+		<option value="4">4</option>
+		<option value="5" selected="selected">5</option>
+		<option value="6">6</option>
+		<option value="7">7</option>
+		<option value="8">8</option>
+		<option value="9">9</option>
+		<option value="10">10</option>
+	</select>
+	
+	Thickness: <select onchange="redraw()" id="thickness">
+		<option value="1">1</option>
+		<option value="2">2</option>
+		<option value="3">3</option>
+		<option value="4">4</option>
+	</select>
+	</p>
+
+	<script>
+		var thickness, maxdepth, mode;
+	
+		var drawBasic = function(context, depth) {
+//			context.beginPath();
+			switch (mode) {
+				case 0:
+					context.moveTo(0, 1);
+					context.lineTo(0.5, 0.5);
+					context.lineTo(1, 1);
+				break;
+				
+				case 1:
+					context.moveTo(1, 1);
+					context.arc(0.5, 1, 0.5, 0, Math.PI, 1);
+					context.moveTo(1, 1);
+				break;
+				
+				case 2:
+					var diff = Math.pow(2, depth-2) / context.canvas.width;
+					if (thickness % 2 == 0) { diff = 0; }
+					context.lineTo(0.25 - diff, 0.75 + diff);
+					context.lineTo(0.25 - diff, 0.25 - diff);
+					context.lineTo(0.75 + diff, 0.25 - diff);
+					context.lineTo(0.75 + diff, 0.75 + diff);
+				break;
+			}
+//			context.stroke();
+			
+		}
+		
+		var draw = function(context, depth) {
+			if (depth >= maxdepth) { return drawBasic(context, depth); }
+			context.save();
+			context.scale(0.5, 0.5);
+			context.lineWidth *= 2;
+
+			context.save();
+				context.translate(1, 1);
+				context.scale(-1, 1);
+				context.rotate(-90 * Math.PI/180);
+				context.translate(-1, 0);
+				draw(context, depth+1);
+			context.restore();
+			
+			context.save();
+				draw(context, depth+1);
+			context.restore();
+			
+			context.save();
+				context.translate(1, 0);
+				draw(context, depth+1);
+			context.restore();
+			
+			context.save();
+				context.translate(0.5, 0.5);
+				context.rotate(90 * Math.PI/180);
+				context.translate(-0.5, 0.5);
+				context.scale(1, -1);
+				context.translate(1, 1);
+				draw(context, depth+1);
+			context.restore();
+
+			context.restore();
+		}
+		
+		var canvas = document.getElementById("canvas");
+		var context = canvas.getContext("2d");
+		
+		var redraw = function() {
+			thickness = parseInt(document.getElementById("thickness").value);
+			mode = parseInt(document.getElementById("mode").value);
+			maxdepth = parseInt(document.getElementById("depth").value);
+			var size = parseInt(document.getElementById("size").value);
+			canvas.width = canvas.height = size;
+		
+			context.scale(size, size);
+			context.lineWidth *= thickness/size;
+			context.lineCap = "square";
+			context.beginPath();
+			draw(context, 1);
+			context.stroke();
+		}
+		
+		redraw();
+	
+	</script>
+</body>
+</html>
